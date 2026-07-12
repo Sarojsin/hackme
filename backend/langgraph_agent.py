@@ -403,7 +403,7 @@ def _parse_schedule(message: str) -> dict | None:
 
     # Extract count from message (e.g. "2 quotes", "5 words", "3 exercises")
     payload = {}
-    count_match = re.search(r"(\d+)\s+(?:quote|quotes|vocab|words?|tasks?|exercises?)", lower)
+    count_match = re.search(r"(\d+)\s+(?:\w+\s+)*(?:quote|quotes|vocab|words?|tasks?|exercises?)", lower)
     if count_match:
         payload["count"] = int(count_match.group(1))
 
