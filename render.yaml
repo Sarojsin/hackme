@@ -9,7 +9,7 @@ services:
       - key: APP_ENV
         value: production
       - key: CORS_ORIGINS
-        value: https://lifeos-frontend.onrender.com
+        value: https://hackme-cdy9.onrender.com
       - key: OPENAI_BASE_URL
         value: https://api.groq.com/openai/v1
       - key: OPENAI_MODEL
