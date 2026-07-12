@@ -587,6 +587,7 @@ async def execute_schedule_action(
             if s["id"] == schedule_id:
                 action_type = s.get("action_type", "reminder")
                 payload = s.get("payload", {})
+                payload["action_desc"] = s.get("action_desc", "")
                 return _build_action_response(action_type, payload)
         raise HTTPException(status_code=404, detail="Schedule not found")
 
@@ -607,8 +608,58 @@ async def execute_schedule_action(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _try_llm_action(action_type: str, count: int, action_desc: str) -> dict | None:
+    """Try to generate action content via LLM. Returns None on failure."""
+    try:
+        from langgraph_agent import _get_llm
+        llm = _get_llm()
+        if llm is None:
+            return None
+
+        if action_type == "learning":
+            prompt = (
+                f"Generate exactly {count} English-Nepali vocabulary words. "
+                f"Topic: {action_desc or 'general'}. "
+                "Respond ONLY with a JSON array, no extra text, no code fences:\n"
+                '[{"english": "<word>", "nepali": "<translation with pronunciation>", '
+                '"pronunciation": "<pronunciation>", "category": "<category>"}]'
+            )
+        elif action_type == "quote":
+            prompt = (
+                f"Generate exactly {count} inspirational quotes. "
+                "Respond ONLY with a JSON array, no extra text, no code fences:\n"
+                '[{"text": "<quote text>", "author": "<author>"}]'
+            )
+        else:
+            return None
+
+        response = llm.invoke(prompt)
+        content = response.content.strip()
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+
+        import json
+        items = json.loads(content)
+        if isinstance(items, list) and len(items) > 0:
+            return items[:count]
+    except Exception:
+        logger.debug("LLM action generation failed, using fallback", exc_info=True)
+    return None
+
+
 def _build_action_response(action_type: str, payload: dict) -> dict:
     count = payload.get("count", 1)
+    action_desc = payload.get("action_desc", "")
+
+    if action_type in ("learning", "quote"):
+        llm_items = _try_llm_action(action_type, count, action_desc)
+        if llm_items is not None:
+            return {"action_type": action_type, "items": llm_items}
 
     if action_type == "quote":
         quotes = [
@@ -618,7 +669,7 @@ def _build_action_response(action_type: str, payload: dict) -> dict:
             {"text": "Believe you can and you're halfway there.", "author": "Theodore Roosevelt"},
             {"text": "The future belongs to those who believe in the beauty of their dreams.", "author": "Eleanor Roosevelt"},
             {"text": "It does not matter how slowly you go as long as you do not stop.", "author": "Confucius"},
-            {"text": "Everything you’ve ever wanted is on the other side of fear.", "author": "George Addair"},
+            {"text": "Everything you've ever wanted is on the other side of fear.", "author": "George Addair"},
             {"text": "Opportunities don't happen. You create them.", "author": "Chris Grosser"},
             {"text": "Success is walking from failure to failure with no loss of enthusiasm.", "author": "Winston Churchill"},
             {"text": "Don't watch the clock; do what it does. Keep going.", "author": "Sam Levenson"},
@@ -647,7 +698,7 @@ def _build_action_response(action_type: str, payload: dict) -> dict:
             {"english": "Peace", "nepali": "शान्ति (Shan-ti)", "pronunciation": "Shan-ti", "category": "feelings"},
             {"english": "Happy", "nepali": "खुशी (Khu-shee)", "pronunciation": "Khu-shee", "category": "feelings"},
             {"english": "Market", "nepali": "बजार (Ba-jaar)", "pronunciation": "Ba-jaar", "category": "places"},
-            {"english": "Delicious", "nepali": "स्वादिष्ट (Swa-disht)", "pronunciation": "Swa-disht", "category": "food"},
+            {"english": "Delicious", "nepali": "स्वादिष्ट (Swa-disht)", "pronunciation": "Swa-disht", "category": "food"},"স্বাদिष्ट (Swa-disht)", "pronunciation": "Swa-disht", "category": "food"},
         ]
         return {
             "action_type": action_type,
