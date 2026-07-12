@@ -24,7 +24,7 @@ import logging
 import random
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Any
 
 from dotenv import load_dotenv
@@ -531,8 +531,8 @@ async def due_schedules(
             .eq("status", "pending") \
             .order("trigger_time", desc=False) \
             .execute()
-        now = datetime.now().isoformat()
-        return [s for s in (resp.data or []) if s.get("trigger_time", "") <= now]
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        return [s for s in (resp.data or []) if s.get("trigger_time", "").replace("Z", "") <= now.replace("Z", "")]
     except Exception as e:
         logger.exception("Due schedules error")
         raise HTTPException(status_code=500, detail=str(e))
