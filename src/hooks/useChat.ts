@@ -187,11 +187,8 @@ export function useChat(): UseChatReturn {
         return;
       }
 
-      if (scheduleTime <= now) {
-        scheduleTime.setDate(scheduleTime.getDate() + 1);
-      }
-
-      const delay = scheduleTime.getTime() - now.getTime();
+      let delay = scheduleTime.getTime() - now.getTime();
+      if (delay < 0) delay = 0;
 
       setTimeout(async () => {
       const actionEmojis: Record<string, string> = {
@@ -270,11 +267,12 @@ export function useChat(): UseChatReturn {
           if (!s.trigger_time || s.status !== 'pending') continue;
           const scheduleTime = new Date(s.trigger_time);
           if (scheduleTime <= now) {
-            scheduleTime.setDate(scheduleTime.getDate() + 1);
-          }
-          const delay = scheduleTime.getTime() - now.getTime();
-          if (delay > 0 && delay < 60000) {
             scheduleNotification(s);
+          } else {
+            const delay = scheduleTime.getTime() - now.getTime();
+            if (delay < 60000) {
+              scheduleNotification(s);
+            }
           }
         }
       } catch (e) {
