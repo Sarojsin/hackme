@@ -22,16 +22,3 @@ services:
         sync: false
       - key: PORT
         value: "8000"
-
-  - type: static
-    name: lifeos-frontend
-    plan: free
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_FASTAPI_URL
-        value: https://lifeos-backend.onrender.com
