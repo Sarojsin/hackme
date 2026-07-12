@@ -490,7 +490,7 @@ async def create_schedule(
             "payload": items[0].payload or {},
             "status": "pending",
         }
-        resp = sb.table("schedules").insert(payload).execute()
+        resp = sb.table("scheduled_events").insert(payload).execute()
         if resp.data:
             return Schedule(**resp.data[0])
     except Exception as e:
@@ -512,7 +512,7 @@ async def list_schedules(
         return sorted(schedules, key=lambda s: s.get("trigger_time", ""))
 
     try:
-        resp = sb.table("schedules") \
+        resp = sb.table("scheduled_events") \
             .select("*") \
             .eq("user_id", user_id) \
             .order("trigger_time", desc=False) \
@@ -531,14 +531,13 @@ async def due_schedules(
     sb = get_supabase()
 
     if sb is None:
-        now = datetime.now().isoformat()
         return [
             s for s in _demo_schedule_crud(user_id)
-            if s.get("status") == "pending" and s.get("trigger_time", "") <= now
+            if s.get("status") == "pending"
         ]
 
     try:
-        resp = sb.table("schedules") \
+        resp = sb.table("scheduled_events") \
             .select("*") \
             .eq("user_id", user_id) \
             .eq("status", "pending") \
@@ -572,7 +571,7 @@ async def update_schedule(
 
     try:
         updates = {k: v for k, v in req.items() if k in ("status", "action_desc", "payload")}
-        resp = sb.table("schedules") \
+        resp = sb.table("scheduled_events") \
             .update(updates) \
             .eq("id", schedule_id) \
             .eq("user_id", user_id) \
@@ -604,7 +603,7 @@ async def execute_schedule_action(
         raise HTTPException(status_code=404, detail="Schedule not found")
 
     try:
-        resp = sb.table("schedules") \
+        resp = sb.table("scheduled_events") \
             .select("*") \
             .eq("id", schedule_id) \
             .eq("user_id", user_id) \
