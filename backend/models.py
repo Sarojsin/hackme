@@ -7,6 +7,7 @@ from typing import Optional, List, Any
 class ChatRequest(BaseModel):
     message: str
     user_id: Optional[str] = None  # Deprecated — auth token is source of truth
+    client_timezone: Optional[int] = None  # Minutes east of UTC (e.g., 345 for Nepal)
 
 
 class TogglePluginRequest(BaseModel):

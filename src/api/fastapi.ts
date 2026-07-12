@@ -104,7 +104,11 @@ export async function sendMessage(
 
   return apiFetch<ChatResponse>('/chat', {
     method: 'POST',
-    body: JSON.stringify({ message, user_id: userId }),
+    body: JSON.stringify({
+      message,
+      user_id: userId,
+      client_timezone: -new Date().getTimezoneOffset(), // e.g., 345 for Nepal UTC+5:45
+    }),
     headers,
   });
 }

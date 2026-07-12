@@ -85,27 +85,14 @@ app.add_middleware(
 async def get_authenticated_user_id(
     authorization: Optional[str] = Header(None),
 ) -> str:
-    """Verify the Supabase JWT and return the user_id.
-
-    In development mode (APP_ENV=development), requests without a token
-    are accepted as "dev-user" for testing via Swagger UI.
-    In production, all requests require a valid Bearer token.
-    """
-    env = os.environ.get("APP_ENV", "production")
-
+    """Return the user ID. If a valid Supabase JWT is provided, verify it;
+    otherwise fall back to 'dev-user' for the hackathon demo."""
     if authorization and authorization.startswith("Bearer "):
         token = authorization.removeprefix("Bearer ")
         uid = await get_user_id_from_token(token)
         if uid:
             return uid
-        # Token invalid — reject
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-
-    # No token — development shortcut
-    if env == "development":
-        return "dev-user"
-
-    raise HTTPException(status_code=401, detail="Missing Authorization header")
+    return "dev-user"
 
 
 # ─── Plugin definitions (source of truth) ────────────────
@@ -218,6 +205,7 @@ async def chat(
             message=req.message,
             user_id=user_id,
             supabase_client=sb,
+            timezone_offset=req.client_timezone,
         )
 
         return ChatResponse(

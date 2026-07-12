@@ -14,7 +14,7 @@ import logging
 import os
 import re
 import uuid
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import Optional, Any
 
 from typing_extensions import TypedDict
@@ -216,16 +216,25 @@ def _create_task_in_supabase(sb, user_id: str, title: str, due_date: str | None 
 
 # ─── Time parsing helpers ────────────────────────────────
 
-def _parse_time_to_iso(time_str: str | None) -> str:
+def _parse_time_to_iso(time_str: str | None, timezone_offset: int | None = None) -> str:
     """Convert a human-friendly time string to an ISO datetime.
 
+    If timezone_offset is provided (minutes east of UTC, e.g. 345 for Nepal),
+    the time is interpreted in the user's timezone then converted to UTC.
+
     Examples:
-      '7:00 AM'  -> '2025-01-15T07:00:00' (today or tomorrow, local time)
-      '06:30'    -> today at 06:30 local time
-      None       -> 30 seconds from now (demo fallback)
+      '7:00 AM'  -> '2025-01-15T07:00:00' (today or tomorrow, user's time)
+      '06:30'    -> today at 06:30 user's time
+      None       -> 30 seconds from now
     """
+    if timezone_offset is not None:
+        tz = timezone(timedelta(minutes=timezone_offset))
+        base_now = datetime.now(tz)
+    else:
+        base_now = datetime.now()
+
     if not time_str:
-        return (datetime.now() + timedelta(seconds=30)).isoformat()
+        return (base_now + timedelta(seconds=30)).isoformat()
 
     time_str = time_str.strip()
 
@@ -244,14 +253,16 @@ def _parse_time_to_iso(time_str: str | None) -> str:
             elif meridian == "am" and hour == 12:
                 hour = 0
 
-        now = datetime.now()
-        event_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-        if event_time <= now:
+        event_time = base_now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if event_time <= base_now:
             event_time += timedelta(days=1)
+
+        if timezone_offset is not None:
+            event_time = event_time.astimezone(timezone.utc).replace(tzinfo=None)
 
         return event_time.isoformat()
 
-    return (datetime.now() + timedelta(seconds=30)).isoformat()
+    return (base_now + timedelta(seconds=30)).isoformat()
 
 
 # ─── Task helpers ─────────────────────────────────────────
@@ -698,6 +709,7 @@ def execute_plugins(state: AgentState) -> dict:
     sb = state.get("_supabase")
     intent = state["intent"]
     user_id = state["user_id"]
+    tz_offset = state.get("_timezone_offset")
     updates: dict = {}
 
     # Fetch user's enabled plugin state
@@ -735,7 +747,7 @@ def execute_plugins(state: AgentState) -> dict:
             action_desc = sched.get("action_desc") or action if isinstance(sched, dict) else action
             payload = sched.get("payload", {}) if isinstance(sched, dict) else {}
 
-            iso_time = _parse_time_to_iso(time_str)
+            iso_time = _parse_time_to_iso(time_str, tz_offset)
             schedule_id = str(uuid.uuid4())
 
             saved = {
@@ -772,7 +784,7 @@ def execute_plugins(state: AgentState) -> dict:
         time_str = alarm_data.get("time")
         label = alarm_data.get("label") or "Alarm"
         alarm_id = str(uuid.uuid4())
-        iso_time = _parse_time_to_iso(time_str)
+        iso_time = _parse_time_to_iso(time_str, tz_offset)
 
         updates["alarm"] = {
             "id": alarm_id,
@@ -837,7 +849,7 @@ def execute_plugins(state: AgentState) -> dict:
         time_str = event_data.get("time")
 
         if action == "create" and title:
-            iso_start = _parse_time_to_iso(time_str)
+            iso_start = _parse_time_to_iso(time_str, tz_offset)
             # Default 1-hour duration
             iso_end = (
                 datetime.utcnow().isoformat() + "Z"
@@ -1069,7 +1081,8 @@ def generate_reply(state: AgentState) -> dict:
 # ─── Orchestrator ────────────────────────────────────────
 
 def run_agent(
-    message: str, user_id: str, supabase_client=None
+    message: str, user_id: str, supabase_client=None,
+    timezone_offset: int | None = None,
 ) -> dict:
     """
     Run the full agent pipeline.
@@ -1089,6 +1102,7 @@ def run_agent(
         "_event_action": None,
         "reply": "",
         "_supabase": supabase_client,
+        "_timezone_offset": timezone_offset,
     }
 
     # 1. Classify user intent
