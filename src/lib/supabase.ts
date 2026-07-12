@@ -19,6 +19,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+export async function getSessionToken(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+}
+
 // ─── Anonymous sign-in (auto-auth for demo) ─────────────
 export async function ensureSignedIn(): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();

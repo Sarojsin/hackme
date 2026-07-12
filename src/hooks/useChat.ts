@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { ChatMessage, PluginManifest } from '../types';
 import { sendMessage, getPlugins, togglePlugin, createSchedules, executeScheduleAction, getDueSchedules } from '../api/fastapi';
-import { ensureSignedIn, subscribeToChatHistory } from '../lib/supabase';
+import { ensureSignedIn, getSessionToken, subscribeToChatHistory } from '../lib/supabase';
 import { useAlarmMonitor } from './useAlarmMonitor';
 
 export interface UseChatReturn {
@@ -9,6 +9,7 @@ export interface UseChatReturn {
   isLoading: boolean;
   plugins: PluginManifest[];
   userId: string;
+  token: string | null;
   send: (text: string) => Promise<void>;
   runDemo: () => Promise<void>;
   toggle: (name: string) => Promise<void>;
@@ -20,6 +21,7 @@ export function useChat(): UseChatReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [plugins, setPlugins] = useState<PluginManifest[]>([]);
   const [userId, setUserId] = useState<string>('');
+  const [token, setToken] = useState<string | null>(null);
   const initialised = useRef(false);
 
   /** Generate a human-friendly morning greeting from the data */
@@ -204,7 +206,7 @@ export function useChat(): UseChatReturn {
       };
 
       try {
-        const result = await executeScheduleAction(schedule.id, undefined);
+        const result = await executeScheduleAction(schedule.id, token || undefined);
         console.debug('[scheduleNotification] action result:', result);
         if (result) {
           if (result.action_type === 'quote' && result.items) {
@@ -254,7 +256,7 @@ export function useChat(): UseChatReturn {
 
       setMessages((prev) => [...prev, reminderMsg]);
     }, delay);
-  }, [userId, executeScheduleAction]);
+  }, [userId, token, executeScheduleAction]);
 
   // ─── Check for pending schedules on mount and periodically ──
   useEffect(() => {
@@ -262,7 +264,7 @@ export function useChat(): UseChatReturn {
 
     const checkSchedules = async () => {
       try {
-        const due = await getDueSchedules(userId, undefined);
+        const due = await getDueSchedules(userId, token || undefined);
         const now = new Date();
         for (const s of due) {
           if (!s.trigger_time || s.status !== 'pending') continue;
@@ -292,10 +294,12 @@ export function useChat(): UseChatReturn {
 
     (async () => {
       const uid = await ensureSignedIn();
+      const accessToken = await getSessionToken();
       setUserId(uid);
+      setToken(accessToken);
 
       try {
-        const res = await getPlugins(uid);
+        const res = await getPlugins(uid, accessToken || undefined);
         setPlugins(res.plugins);
       } catch {
         // Fallback defaults
@@ -350,7 +354,7 @@ export function useChat(): UseChatReturn {
       setIsLoading(true);
 
       try {
-        const res = await sendMessage(text, userId);
+        const res = await sendMessage(text, userId, token || undefined);
 
         // Simulate a brief thinking delay for natural feel
         await new Promise((r) => setTimeout(r, 400));
@@ -388,8 +392,8 @@ export function useChat(): UseChatReturn {
             return true;
           });
 
-          try {
-            const created = await createSchedules(userId, unique, undefined);
+      try {
+        const created = await createSchedules(userId, unique, token || undefined);
             const scheduleMap = new Map(created.map((c) => [`${c.trigger_time}|${c.action_type}|${c.action_desc}`, c]));
             const updatedData = {
               ...res.data,
@@ -436,7 +440,7 @@ export function useChat(): UseChatReturn {
         setIsLoading(false);
       }
     },
-    [userId, isLoading, scheduleLocalAlarm, requestPermission, createSchedules, scheduleNotification]
+    [userId, isLoading, scheduleLocalAlarm, requestPermission, createSchedules, scheduleNotification, token]
   );
 
   /** ─── Scheduled event guard ─────────────────────────── */
@@ -532,7 +536,7 @@ export function useChat(): UseChatReturn {
       });
 
       try {
-        await togglePlugin(name, userId, newEnabled!);
+        await togglePlugin(name, userId, newEnabled!, token || undefined);
       } catch {
         // Revert on failure
         setPlugins((prev) => {
@@ -543,8 +547,8 @@ export function useChat(): UseChatReturn {
         });
       }
     },
-    [userId]
+    [userId, token]
   );
 
-  return { messages, isLoading, plugins, userId, send, runDemo, toggle, clearMessages };
+  return { messages, isLoading, plugins, userId, send, runDemo, toggle, clearMessages, token };
 }
