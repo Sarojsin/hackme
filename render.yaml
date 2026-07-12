@@ -4,6 +4,7 @@ services:
     plan: free
     env: docker
     dockerfilePath: backend/Dockerfile
+    buildContext: backend
     healthCheckPath: /health
     envVars:
       - key: APP_ENV
