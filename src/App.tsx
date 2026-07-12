@@ -26,6 +26,16 @@ export default function App() {
     return () => window.removeEventListener('lifeos-celebrate', handler);
   }, [celebrate]);
 
+  // ── Keep Render backend awake (ping every 10 min) ──
+  useEffect(() => {
+    const backendUrl = import.meta.env.VITE_FASTAPI_URL as string | undefined;
+    if (!backendUrl) return;
+    const ping = () => fetch(`${backendUrl}/health`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+    ping();
+    const id = setInterval(ping, 600_000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <div className="min-h-dvh bg-background bg-ambient-glow flex flex-col relative overflow-hidden">
       {/* ── Confetti overlay ── */}

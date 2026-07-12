@@ -38,7 +38,7 @@ async function apiFetch<T>(
           ...options.headers,
           'Content-Type': 'application/json',
         },
-        signal: AbortSignal.timeout(10_000), // 10s timeout
+        signal: AbortSignal.timeout(60_000), // 60s timeout (Render cold start)
       });
 
       if (!response.ok) {
