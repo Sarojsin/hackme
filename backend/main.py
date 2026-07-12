@@ -698,7 +698,7 @@ def _build_action_response(action_type: str, payload: dict) -> dict:
             {"english": "Peace", "nepali": "शान्ति (Shan-ti)", "pronunciation": "Shan-ti", "category": "feelings"},
             {"english": "Happy", "nepali": "खुशी (Khu-shee)", "pronunciation": "Khu-shee", "category": "feelings"},
             {"english": "Market", "nepali": "बजार (Ba-jaar)", "pronunciation": "Ba-jaar", "category": "places"},
-            {"english": "Delicious", "nepali": "स्वादिष्ट (Swa-disht)", "pronunciation": "Swa-disht", "category": "food"},"স্বাদिष्ट (Swa-disht)", "pronunciation": "Swa-disht", "category": "food"},
+            {"english": "Delicious", "nepali": "स्वादिष्ट (Swa-disht)", "pronunciation": "Swa-disht", "category": "food"},
         ]
         return {
             "action_type": action_type,
