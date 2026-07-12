@@ -234,6 +234,8 @@ def _parse_time_to_iso(time_str: str | None, timezone_offset: int | None = None)
         base_now = datetime.now()
 
     if not time_str:
+        if timezone_offset is not None:
+            return (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat()
         return (base_now + timedelta(seconds=30)).isoformat()
 
     time_str = time_str.strip()
@@ -259,10 +261,29 @@ def _parse_time_to_iso(time_str: str | None, timezone_offset: int | None = None)
 
         if timezone_offset is not None:
             event_time = event_time.astimezone(timezone.utc).replace(tzinfo=None)
+            return event_time.isoformat() + "Z"
 
         return event_time.isoformat()
 
+    if timezone_offset is not None:
+        return (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat()
     return (base_now + timedelta(seconds=30)).isoformat()
+
+
+# ─── Display helpers ──────────────────────────────────────
+
+
+def _format_time_display(iso_time: str, timezone_offset: int | None = None) -> str:
+    """Format an ISO time string into a user-friendly local time display."""
+    try:
+        ts = iso_time.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(ts)
+        if dt.tzinfo and timezone_offset is not None:
+            tz = timezone(timedelta(minutes=timezone_offset))
+            dt = dt.astimezone(tz)
+        return dt.strftime("%I:%M %p").lstrip("0")
+    except Exception:
+        return iso_time
 
 
 # ─── Task helpers ─────────────────────────────────────────
@@ -1037,6 +1058,8 @@ def generate_reply(state: AgentState) -> dict:
         if schedules:
             data["schedules"] = schedules
 
+        tz_display = state.get("_timezone_offset")
+
         if len(schedules) > 1:
             lines = []
             for s in schedules:
@@ -1044,10 +1067,11 @@ def generate_reply(state: AgentState) -> dict:
                     "alarm": "⏰", "quote": "💡", "music": "🎵", "learning": "📚",
                     "gym": "💪", "task": "📋", "reminder": "🔔"
                 }.get(s.get("action_type", "reminder"), "🔔")
-                lines.append(f"{emoji} **{s.get('trigger_time', '')}** — {s.get('action_desc') or s.get('action_type', 'reminder')}")
+                time_str = _format_time_display(s.get("trigger_time", ""), tz_display)
+                lines.append(f"{emoji} **{time_str}** — {s.get('action_desc') or s.get('action_type', 'reminder')}")
             reply = "Got it! I've scheduled all of these:\n\n" + "\n".join(lines)
         else:
-            time_display = schedule.get("trigger_time", "the requested time")
+            time_display = _format_time_display(schedule.get("trigger_time", ""), tz_display) or "the requested time"
             action = schedule.get("action_type", "reminder")
             action_desc = schedule.get("action_desc") or action
 
