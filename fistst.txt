@@ -1,0 +1,121 @@
+✅ None set for 12:48am! I'll wake you up with a morning briefing including your tasks and today's weather.
+
+Alarm
+
+12:48am
+Completed
+12:47 AM
+Proactive
+🌅 Good morning! Here's your briefing for today:
+
+🌤 It's 22° and partly cloudy in San Francisco, with a high of 26° and low of 18°.
+
+📋 You have 3 tasks today (1 already done ✅)
+
+Let's get started! 💪
+
+Tasks — 3 remaining
+Buy groceries
+
+Due 7/10/2026
+
+Finish project report
+
+Due 7/10/2026
+
+Morning standup at 10am
+
+Due 7/10/2026
+
+1 completed
+▼
+San Francisco
+22°
+Partly Cloudy
+H: 26° · L: 18°
+Humidity: 55%
+Morning Alarm
+
+12:48am
+Completed
+12:47 AM
+Set an alarm for 12:49am
+
+12:48 AM
+✅ None set for 12:49am! I'll wake you up with a morning briefing including your tasks and today's weather.
+
+Alarm
+
+12:49am
+Completed
+12:48 AM
+Proactive
+🌅 Good morning! Here's your briefing for today:
+
+🌤 It's 22° and partly cloudy in San Francisco, with a high of 26° and low of 18°.
+
+📋 You have 3 tasks today (1 already done ✅)
+
+Let's get started! 💪
+
+Tasks — 3 remaining
+Buy groceries
+
+Due 7/10/2026
+
+Finish project report
+
+Due 7/10/2026
+
+Morning standup at 10am
+
+Due 7/10/2026
+
+1 completed
+▼
+San Francisco
+22°
+Partly Cloudy
+H: 26° · L: 18°
+Humidity: 55%
+Morning Alarm
+
+12:49am
+Completed . its not working properly like when 12:49 than only one task is completely , task completion is showm before time , and What are my tasks today?
+
+12:49 AM
+Here are your tasks for today:
+
+⬜ Review daily goals — due 2026-07-11
+⬜ Check calendar — due 2026-07-11
+
+2 remaining
+
+Tasks — 2 remaining
+Review daily goals
+
+Due 7/11/2026
+
+Check calendar
+
+Due 7/11/2026
+
+12:49 AM
+Review daily goals
+
+12:50 AM
+Here are your tasks for today:
+
+⬜ Review daily goals — due 2026-07-11
+⬜ Check calendar — due 2026-07-11
+
+2 remaining
+
+Tasks — 2 remaining
+Review daily goals
+
+Due 7/11/2026
+
+Check calendar
+
+Due 7/11/2026 , this is also not working properly cause everyday ai should ask what is your todo list for   today and add task at first our system should ask than 

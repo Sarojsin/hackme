@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "LifeOS",
+    "slug": "lifeos-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "lifeos",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lifeos.app",
+      "infoPlist": {
+        "NSUserNotificationsUsageDescription": "Allow notifications for alarms and reminders"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.lifeos.app",
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "SCHEDULE_ALARM",
+        "READ_CALENDAR",
+        "WRITE_CALENDAR"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      [
+        "expo-calendar",
+        {
+          "calendarPermissions": "Read/Write"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
